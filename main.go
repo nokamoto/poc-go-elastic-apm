@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	pb "github.com/nokamoto/poc-go-elastic-apm/protobuf"
+	"go.elastic.co/apm/module/apmgrpc"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -24,6 +25,7 @@ func serve() {
 	fmt.Printf("listen tcp port (%d)\n", *port)
 
 	opts := []grpc.ServerOption{}
+	opts = append(opts, grpc.UnaryInterceptor(apmgrpc.NewUnaryServerInterceptor()))
 	server := grpc.NewServer(opts...)
 
 	a, err := newServiceA()
@@ -45,6 +47,7 @@ func serve() {
 func call() {
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithInsecure())
+	opts = append(opts, grpc.WithUnaryInterceptor(apmgrpc.NewUnaryClientInterceptor()))
 
 	conn, err := grpc.Dial(*addr, opts...)
 	if err != nil {
